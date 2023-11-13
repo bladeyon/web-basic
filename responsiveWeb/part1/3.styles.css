@@ -1,0 +1,150 @@
+h1 {
+  text-align: center;
+}
+
+.container {
+  background-color: rgb(255, 255, 255);
+  padding: 10px 0;
+}
+
+.container .marker {
+  height: 25px;
+  width: 200px;
+  margin: 10px auto;
+}
+
+.cap,
+.sleeve {
+  display: inline-block;
+}
+
+.container .sleeve {
+  width: 110px;
+  height: 25px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-left: 10px double rgba(0, 0, 0, 0.75);
+}
+
+.container .cap {
+  width: 60px;
+  height: 25px;
+}
+
+.container .red {
+  background: linear-gradient(
+    rgb(122, 74, 14),
+    rgb(245, 62, 113),
+    rgb(162, 27, 27)
+  );
+  box-shadow: 0 0 20px 0 rgba(83, 14, 14, 0.8);
+}
+
+.container .green {
+  background: linear-gradient(#55680d, #71f53e, #116c31);
+  box-shadow: 0 0 20px 0 #3b7e20cc;
+}
+
+.container .blue {
+  background: linear-gradient(
+    hsl(186, 76%, 16%),
+    hsl(223, 90%, 60%),
+    hsl(240, 56%, 42%)
+  );
+  box-shadow: 0 0 20px 0 hsla(223, 59%, 31%, 0.8);
+}
+
+/* 色盘 */
+.color-wheel {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  margin: 20px auto;
+}
+
+.color-wheel span {
+  display: block;
+  width: 25%;
+  height: 50%;
+  position: absolute;
+  transform-origin: 0% 100%;
+}
+
+/* 定位每个span */
+/* 依次填充RGB和CMYK颜色 */
+.color-wheel .red {
+  background-color: rgb(255, 0, 0);
+  transform: translate(75px);
+  width: 52px !important;
+}
+
+.color-wheel .orange {
+  background-color: rgb(255, 127, 0);
+  transform: translate(100px) rotate(15deg);
+}
+
+.color-wheel .yellow {
+  background-color: rgb(255, 255, 0);
+  transform: translate(100px) rotate(45deg);
+}
+
+.color-wheel .yellowgreen {
+  background-color: rgb(127, 255, 0);
+  transform: translate(100px) rotate(75deg);
+}
+
+.color-wheel .green {
+  background-color: rgb(0, 255, 0);
+  transform: translate(100px) rotate(105deg);
+}
+
+.color-wheel .lightgreen {
+  background-color: rgb(0, 255, 127);
+  transform: translate(100px) rotate(135deg);
+  color: lightgreen;
+}
+
+.color-wheel .cyan {
+  background-color: rgb(0, 255, 255);
+  transform: translate(100px) rotate(165deg);
+
+  color: cyan;
+}
+
+.color-wheel .skyblue {
+  background-color: rgb(0, 127, 255);
+  transform: translate(100px) rotate(195deg);
+
+  color: skyblue;
+}
+
+.color-wheel .blue {
+  background-color: rgb(0, 0, 255);
+  transform: translate(100px) rotate(225deg);
+}
+
+.color-wheel .purple {
+  background-color: rgb(127, 0, 255);
+  transform: translate(100px) rotate(255deg);
+  color: purple;
+}
+
+.color-wheel .triangle {
+  width: 0 !important;
+  height: 0 !important;
+  border: 28px solid transparent;
+  border-bottom: 0;
+  border-top-width: 100px;
+  transform-origin: 50% 100% !important;
+}
+
+.color-wheel .triangle.magenta {
+  transform: translate(72px) rotate(-60deg);
+  border-top-color: rgb(255, 0, 255);
+}
+
+.color-wheel .triangle.lightpink {
+  transform: translate(72px) rotate(-30deg);
+  border-top-color: rgb(255, 0, 127);
+}
