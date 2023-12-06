@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>scatter-chart</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+    }
+
+    main {
+      position: relative;
+      margin: 0 auto;
+      padding: 20px;
+      box-shadow: 0 0 4px 6px #eee;
+    }
+
+    #title {
+      text-align: center;
+    }
+
+    .bar {
+      fill: navy
+    }
+
+    .bar:hover {
+      fill: red
+    }
+
+    #tooltip {
+      position: absolute;
+      padding: 10px;
+      border: 0;
+      border-radius: 4px;
+      background-color: #b0c4de;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    #legend {
+      position: absolute;
+      top: 100px;
+      right: 40px;
+    }
+
+    #legend .legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .legend-text {
+      margin-right: 10px;
+    }
+
+    .legend-color {
+      width: 10px;
+      height: 10px;
+      background-color: lightblue;
+    }
+
+    .legend-color.no {
+      background-color: orange;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1 id="title">Cyclist Data</h1>
+    <svg id="svg"></svg>
+    <div id="legend">
+      <div class="legend-item">
+        <span class="legend-text">url</span>
+        <span class="legend-color"></span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-text">no url</span>
+        <span class="legend-color no"></span>
+      </div>
+    </div>
+  </main>
+  <div id="tooltip"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+  <script>
+    const dimension = {
+      width: 900,
+      height: 500,
+      margin: {
+        top: 50,
+        right: 0,
+        bottom: 50,
+        left: 60
+      }
+    }
+
+    d3.json('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/cyclist-data.json').then((data) => {
+      const svg = d3.select('#svg').attr('width', dimension.width).attr('height', dimension.height);
+
+      // const maxDate = d3.max(data, d => new Date(d[0]));
+      // maxDate.setMonth(maxDate.getMonth() + 12); // 再加一年
+
+      const xScale = d3.scaleLinear().range([dimension.margin.left, dimension.width - dimension.margin.right]).domain([d3.min(data, d => new Date(d.Year - 1, 0, 1)), d3.max(data, d => new Date(d.Year + 1, 0, 1))]);
+
+      const yScale = d3.scaleLinear().range([dimension.height - dimension.margin.top, dimension.margin.bottom]).domain([d3.max(data, d => new Date(`2023-01-01 00:${d.Time}`)), d3.min(data, d => new Date(`2023-01-01 00:${d.Time}`))]);
+
+      const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat('%Y')); // .ticks(Math.ceil(data.length / 4 / 4)).tickFormat(d3.timeFormat('%Y'));
+      const yAxis = d3.axisLeft(yScale).tickFormat(d3.timeFormat('%M:%S'));
+
+      svg
+        .append('g')
+        .attr('id', 'x-axis')
+        .attr('transform', `translate(0, ${dimension.height - dimension.margin.bottom})`)
+        .call(xAxis);
+
+      svg
+        .append('g')
+        .attr('id', 'y-axis')
+        .attr('transform', `translate(${dimension.margin.left}, 0)`)
+        .call(yAxis);
+      svg.select('#y-axis')
+        .append('text')
+        .text('Time in Minutes')
+        .attr('y', -dimension.margin.left - 20)
+        .attr('x', -dimension.height / 2)
+        .attr('transform', 'rotate(-90)')
+        .attr('dy', '2em')
+        .attr('fill', 'black')
+        .style('font-size', '18px')
+        .attr('text-anchor', 'middle')
+
+      svg
+        .selectAll('circle')
+        .data(data)
+        .enter()
+        .append('circle')
+        .attr('class', 'dot')
+        .attr('data-xvalue', d => d.Year)
+        .attr('data-yvalue', d => d.Time)
+        .attr('cx', (d, index) => xScale(new Date(d.Year, 0, 1)))
+        .attr('cy', d => yScale(new Date(`2023-01-01 00:${d.Time}`)))
+        .attr('r', 5)
+        .style('opacity', 0.8)
+        .style('stroke', 'black')
+        .style('fill', d => d.URL ? 'lightblue' : 'orange')
+        .on("mouseover", function (event, d) {
+          const tip = d3.select('#tooltip');
+          tip.style('left', event.pageX + 10 + 'px')
+            .style('top', event.pageY + 10 + 'px')
+            .transition()
+            .duration(200)
+            .style('opacity', 0.9);
+
+          tip.append('div')
+            .text(`${d.Name}: ${d.Nationality}`);
+          tip.append('div')
+            .text(`Year: ${d.Year},Time: ${d.Time}`);
+
+          if (d.Doping) {
+            tip.append('div')
+              .style('margin-top', '15px')
+              .text(`${d.Doping}`)
+          }
+
+        })
+        .on("mouseout", function () {
+          const tip = d3.select('#tooltip')
+          tip.transition()
+            .duration(500)
+            .style('opacity', 0);
+          tip.selectAll('div').remove();
+        });
+    }).catch((err) => console.log(err));
+
+
+
+
+  </script>
+
+</body>
+
+</html>
