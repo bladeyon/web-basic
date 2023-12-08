@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>heatmap-chart</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+    }
+
+    main {
+      margin: 0 auto;
+      padding: 20px;
+      box-shadow: 0 0 4px 6px #eee;
+    }
+
+    #title {
+      text-align: center;
+    }
+
+    .bar {
+      fill: #00fbff;
+      background-image: linear-gradient(to right, #0040ff, #ffcc00);
+    }
+
+    .bar:hover {
+      /* fill: red */
+      /* border: 1px solid #000; */
+      stroke: #000;
+    }
+
+    #tooltip {
+      position: absolute;
+      top: -20px;
+      padding: 10px;
+      border: 1px solid #999;
+      background-color: #ccc;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1 id="title">global-temperature</h1>
+    <svg id="svg"></svg>
+    <div id="tooltip"></div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <!-- <script src="./d3.min.js"> </script> -->
+  <script>
+    const dimension = {
+      width: 900,
+      height: 500,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 80,
+        left: 80
+      }
+    }
+
+    d3.json('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json').then(({ baseTemperature, monthlyVariance: data }) => {
+
+      let minTemp = Infinity, maxTemp = -Infinity;
+      data.forEach(d => {
+        minTemp = Math.min(minTemp, d.variance + baseTemperature);
+        maxTemp = Math.max(maxTemp, d.variance + baseTemperature);
+      });
+
+      console.log(minTemp, maxTemp);
+      const legendData = d3.ticks(minTemp, maxTemp, 9)
+      const legendColors = [
+        '#a50026',
+        '#d73027',
+        '#f46d43',
+        '#fdae61',
+        '#fee090',
+        '#e0f3f8',
+        '#abd9e9',
+        '#74add1',
+        '#4575b4',
+        '#313695'
+      ].reverse();
+      // const getColor = d3.scaleThreshold().range(['#0000ff', '#0080ff', '#00ff00', '#80ff00', '#ff0000']).domain([minTemp, maxTemp]);
+      const getColor = d3
+        .scaleThreshold()
+        .domain(
+          (function (min, max, count) {
+            var array = [];
+            var step = (max - min) / count;
+            var base = min;
+            for (var i = 1; i < count; i++) {
+              array.push(base + i * step);
+            }
+            return array;
+          })(minTemp, maxTemp, legendColors.length)
+        )
+        .range(legendColors);
+      const svg = d3.select('#svg').attr('width', dimension.width).attr('height', dimension.height);
+
+      const maxYear = data[data.length - 1].year, minYear = data[0].year;
+      const rectW = Math.round((dimension.width - dimension.margin.left - dimension.margin.right) / ((maxYear - minYear) + 1)),
+        rectH = (dimension.height - dimension.margin.top - dimension.margin.bottom) / 12;
+
+
+      const xScale = d3.scaleLinear().range([dimension.margin.left, dimension.width - dimension.margin.right]).domain([minYear, maxYear + 1]);
+
+      const yScale = d3.scaleBand().range([dimension.margin.top, dimension.height - dimension.margin.bottom]).domain([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+
+      const xAxis = d3.axisBottom(xScale).tickFormat(d3.format('d'));
+      const yAxis = d3.axisLeft(yScale).tickFormat((m) => {
+        const d = new Date(0)
+        d.setUTCMonth(m)
+        return d.toLocaleDateString('en', { month: 'long' })
+      });
+
+      svg
+        .append('g')
+        .attr('id', 'x-axis')
+        .attr('transform', `translate(0, ${dimension.height - dimension.margin.bottom})`)
+        .call(xAxis);
+
+      svg
+        .append('g')
+        .attr('id', 'y-axis')
+        .attr('transform', `translate(${dimension.margin.left}, 0)`)
+        .call(yAxis);
+
+
+      svg.append('g')
+        .attr('id', 'heatmap')
+        .selectAll('rect')
+        .data(data)
+        .enter()
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('data-year', d => d.year)
+        .attr('data-month', d => d.month)
+        .attr('data-temp', d => d.variance + baseTemperature)
+        .attr('x', (d, index) => xScale(d.year))
+        .attr('y', d => yScale(d.month - 1))
+        .attr('width', rectW)
+        .attr('height', rectH)
+        .style('fill', d => getColor(d.variance + baseTemperature))
+        .on("mouseover", function (event, d) {
+          const tip = d3.select('#tooltip')
+          tip.style('left', event.pageX + 10 + 'px')
+            .style('top', event.pageY + 10 + 'px')
+            .transition()
+            .duration(200)
+            .style('opacity', 0.9)
+
+          tip.append('div').text(`${d.year} - ${d.month}`)
+          tip.append('div').text(`${d.variance + baseTemperature}`)
+          tip.append('div').text(`${d.variance}`)
+
+          tip.selectAll('div').style('text-align', 'center')
+
+        })
+        .on("mouseout", function () {
+          const tip = d3.select('#tooltip')
+          tip.transition()
+            .duration(500)
+            .style('opacity', 0)
+          tip.selectAll('div').remove();
+        });
+
+      const xLScale = d3
+        .scaleLinear()
+        .range([dimension.margin.left, dimension.width / 2])
+        .domain([minTemp, maxTemp]);
+      const xLAxis = d3.axisBottom(xLScale).tickFormat(d3.format('.1f'));
+      const legend = svg
+        .append('g')
+        .attr('id', 'legend')
+        .attr('transform', `translate(0, ${dimension.height - 40})`)
+
+      legend.append('g')
+        .attr('id', 'legend-axis')
+        .attr('transform', `translate(0, 20)`)
+        .call(xLAxis);
+
+      legend.append('g')
+        .attr('id', 'legend-color')
+        .selectAll('rect')
+        .data(legendData.slice(0, legendData.length - 1)).enter()
+        .append('rect')
+        .attr('class', 'legend-item')
+        .attr('x', d => xLScale(d))
+        .attr('y', 0)
+        .attr('width', (xLScale(legendData[legendData.length - 1]) - xLScale(legendData[0])) / (legendData.length - 1))
+        .attr('height', 20)
+        .style('stroke', 'black')
+        .style('fill', d => getColor(d));
+    }
+    ).catch((err) => console.log(err));
+
+
+
+  </script>
+
+</body>
+
+</html>
