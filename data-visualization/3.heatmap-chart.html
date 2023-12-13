@@ -31,18 +31,12 @@
       box-shadow: 0 0 4px 6px #eee;
     }
 
-    #title {
+    #title,
+    #description {
       text-align: center;
     }
 
-    .bar {
-      fill: #00fbff;
-      background-image: linear-gradient(to right, #0040ff, #ffcc00);
-    }
-
-    .bar:hover {
-      /* fill: red */
-      /* border: 1px solid #000; */
+    .cell:hover {
       stroke: #000;
     }
 
@@ -61,11 +55,13 @@
 <body>
   <main>
     <h1 id="title">global-temperature</h1>
+    <p id="description">热力图可视化</p>
     <svg id="svg"></svg>
     <div id="tooltip"></div>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <!-- <script src="./d3.min.js"> </script> -->
+  <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
   <script>
     const dimension = {
       width: 900,
@@ -152,9 +148,9 @@
         .data(data)
         .enter()
         .append('rect')
-        .attr('class', 'bar')
+        .attr('class', 'cell')
         .attr('data-year', d => d.year)
-        .attr('data-month', d => d.month)
+        .attr('data-month', d => d.month - 1)
         .attr('data-temp', d => d.variance + baseTemperature)
         .attr('x', (d, index) => xScale(d.year))
         .attr('y', d => yScale(d.month - 1))
@@ -168,6 +164,7 @@
             .transition()
             .duration(200)
             .style('opacity', 0.9)
+            .attr('data-year', d.year);
 
           tip.append('div').text(`${d.year} - ${d.month}`)
           tip.append('div').text(`${d.variance + baseTemperature}`)

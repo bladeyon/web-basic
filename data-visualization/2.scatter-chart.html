@@ -99,6 +99,7 @@
   </main>
   <div id="tooltip"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
 
   <script>
     const dimension = {
@@ -117,7 +118,7 @@
 
       const xScale = d3.scaleLinear().range([dimension.margin.left, dimension.width - dimension.margin.right]).domain([d3.min(data, d => d.Year - 1), d3.max(data, d => d.Year + 1)]); // 横轴范围扩大
 
-      const yScale = d3.scaleLinear().range([dimension.height - dimension.margin.top, dimension.margin.bottom]).domain([d3.max(data, d => new Date(`1970-01-01 00:${d.Time}`)), d3.min(data, d => new Date(`1970-01-01 00:${d.Time}`))]);
+      const yScale = d3.scaleLinear().range([dimension.height - dimension.margin.top, dimension.margin.bottom]).domain([d3.max(data, d => new Date(`1970-01-01 00:${d.Time}Z`)), d3.min(data, d => new Date(`1970-01-01 00:${d.Time}Z`))]);
 
       const xAxis = d3.axisBottom(xScale).tickFormat(d3.format('d')); // 当数字处理
       const yAxis = d3.axisLeft(yScale).tickFormat(d3.timeFormat('%M:%S'));
@@ -151,21 +152,16 @@
         .append('circle')
         .attr('class', 'dot')
         .attr('data-xvalue', d => d.Year)
-        .attr('data-yvalue', d => d.Time)
+        .attr('data-yvalue', d => new Date(`1970-01-01 00:${d.Time}Z`))
         .attr('cx', (d, index) => xScale(d.Year))
-        .attr('cy', d => yScale(new Date(`1970-01-01 00:${d.Time}`)))
+        .attr('cy', d => yScale(new Date(`1970-01-01 00:${d.Time}Z`)))
         .attr('r', 5)
         .style('opacity', 0.8)
         .style('stroke', 'black')
         .style('fill', d => d.URL ? 'lightblue' : 'orange')
         .on("mouseover", function (event, d) {
           const tip = d3.select('#tooltip');
-          tip.style('left', event.pageX + 10 + 'px')
-            .style('top', event.pageY + 10 + 'px')
-            .transition()
-            .duration(200)
-            .style('opacity', 0.9);
-
+          tip.attr('data-year', d.Year);
           tip.append('div')
             .text(`${d.Name}: ${d.Nationality}`);
           tip.append('div')
@@ -176,13 +172,18 @@
               .style('margin-top', '15px')
               .text(`${d.Doping}`)
           }
+          tip.style('left', event.pageX + 10 + 'px')
+            .style('top', event.pageY + 10 + 'px')
+            .transition()
+            .duration(200)
+            .style('opacity', 0.9)
 
         })
         .on("mouseout", function () {
           const tip = d3.select('#tooltip')
           tip.transition()
-            .duration(500)
-            .style('opacity', 0);
+          .duration(200)
+          .style('opacity', 0);
           tip.selectAll('div').remove();
         });
     }).catch((err) => console.log(err));
