@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+    }
+
+    main {
+      margin: 0 auto;
+      padding: 20px;
+      box-shadow: 0 0 4px 6px #eee;
+    }
+
+    #title,
+    #description {
+      text-align: center;
+    }
+
+    .county:hover {
+      stroke: #fff;
+    }
+
+    #tooltip {
+      position: absolute;
+      top: -20px;
+      padding: 10px;
+      border: 1px solid #999;
+      background-color: #ccc;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1 id="title">United States Educational Attainment</h1>
+    <p id="description">Percentage of adults age 25 and older with a bachelor's degree or higher (2010-2014)</p>
+    <svg id="svg"></svg>
+    <div id="tooltip"></div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+  <script>
+    const dimension = {
+      width: 900,
+      height: 600,
+      margin: {
+        top: 20,
+        right: 20,
+        bottom: 80,
+        left: 80
+      }
+    }
+
+    const svg = d3.select('#svg')
+      .attr('width', dimension.width)
+      .attr('height', dimension.height);
+
+    (async () => {
+      const countiesJSON = d3.json('https://cdn.freecodecamp.org/testable-projects-fcc/data/choropleth_map/counties.json')
+      const education = d3.json('https://cdn.freecodecamp.org/testable-projects-fcc/data/choropleth_map/for_user_education.json')
+
+      const [geo, data] = await Promise.all([countiesJSON, education])
+
+      let minEdu = Infinity, maxEdu = -Infinity;
+      const dataMap = new Map();
+      data.forEach(item => {
+        dataMap.set(item.fips, item);
+        minEdu = Math.min(minEdu, item.bachelorsOrHigher);
+        maxEdu = Math.max(maxEdu, item.bachelorsOrHigher);
+      });
+
+      // const interpolate = d3.interpolateRgb('#E4F6E1', '#006F32')
+      const interpolate = (value = 0) => d3.interpolateBlues(value / 100)
+
+      const counties = svg.append('g')
+        .attr('id', 'counties')
+        .selectAll('path')
+        .data(topojson.feature(geo, geo.objects.counties).features)
+        .join('path')
+        .attr('class', 'county')
+        .attr('data-fips', d => d.id)
+        .attr('data-education', d => dataMap.get(d.id)?.bachelorsOrHigher)
+        // .attr('stroke', '#aaa')
+        .attr('fill', d => interpolate(dataMap.get(d.id)?.bachelorsOrHigher))
+        .attr("d", d3.geoPath())
+        .on("mouseover", function (event, d) {
+          const countyData = dataMap.get(d.id)
+          const tip = d3.select('#tooltip')
+          tip.style('left', event.pageX + 10 + 'px')
+            .style('top', event.pageY + 10 + 'px')
+            .transition()
+            .duration(200)
+            .style('opacity', 0.9)
+            .attr('data-education', d => countyData.bachelorsOrHigher)
+            .text(`${countyData.area_name}, ${countyData.state}: ${countyData.bachelorsOrHigher}%`)
+
+        })
+        .on("mouseout", function () {
+          const tip = d3.select('#tooltip')
+          tip.transition()
+            .duration(500)
+            .style('opacity', 0)
+        });
+
+      const states = svg.append('g')
+        .attr('id', 'state')
+        .selectAll('path')
+        .data(topojson.feature(geo, geo.objects.states).features)
+        .join('path')
+        .attr('class', 'state')
+        .attr('fill', 'none')
+        .attr('stroke', '#fff')
+        .attr('d', d3.geoPath())
+
+
+      const legendData = d3.ticks(minEdu, maxEdu, 9)
+      const legendScale = d3
+        .scaleLinear()
+        .range([dimension.width / 2, dimension.width - dimension.margin.right])
+        .domain([minEdu, maxEdu]);
+      const xLAxis = d3.axisBottom(legendScale).tickFormat((value) => {
+        return `${d3.format('.1f')(value)}%`
+      });
+      const legend = svg
+        .append('g')
+        .attr('id', 'legend')
+        .attr('transform', `translate(0, 30)`)
+
+      legend.append('g')
+        .attr('id', 'legend-axis')
+        .attr('transform', `translate(0, 10)`)
+        .call(xLAxis);
+
+      legend.append('g')
+        .attr('id', 'legend-color')
+        .selectAll('rect')
+        .data(legendData.slice(0, legendData.length - 1)).enter()
+        .append('rect')
+        .attr('class', 'legend-item')
+        .attr('x', d => legendScale(d))
+        .attr('y', 0)
+        .attr('width', (legendScale(legendData[legendData.length - 1]) - legendScale(legendData[0])) / (legendData.length - 1))
+        .attr('height', 10)
+        .style('fill', d => interpolate(d));
+
+    })();
+
+
+
+  </script>
+</body>
+
+</html>
