@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  url: <input id="url">
+  <button id="btn">click</button>
+  <iframe src="" frameborder="0"></iframe>
+  <script>
+    document.getElementById('btn').addEventListener('click', () => {
+      const url = document.getElementById('url').value
+      fetch('/getFile', {
+        method: 'get',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url })
+      }).then(res => {
+        return res.json()
+      }).then(res => {
+        document.querySelector('iframe').src = res.url
+      })
+    })
+  </script>
+</body>
+
+</html>

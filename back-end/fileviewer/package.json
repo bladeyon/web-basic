@@ -1,0 +1,17 @@
+{
+  "name": "fileviewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.0",
+    "express": "^4.12.4"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
